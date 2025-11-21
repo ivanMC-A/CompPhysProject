@@ -6,16 +6,16 @@ class ESN:
     """
     A class for creating an basic echo state network (ESN).
 
-    Parameters
-        res_size (int): Number of resevoir nodes
-        seed (int): Random seed
-
     """
 
     #Initialize a new ESN
     def __init__(self, res_size, seed=None):
         """
         Initialize the Echo State Network.
+
+        Parameters
+            res_size (int): Number of resevoir nodes
+            seed (int): Random seed
 
         """
 
@@ -49,7 +49,7 @@ class ESN:
             test_length (int): Number of time steps to predict.
 
         Returns
-            Y (ndarray): Array containing the predicted outputs.
+            prediction (ndarray): Array containing the predicted outputs.
         
         """
 
