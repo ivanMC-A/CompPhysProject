@@ -6,7 +6,7 @@ class ESN:
     """
 
     #Initialize a new ESN
-    def __init__(self, res_size, seed=None, bias=1):
+    def __init__(self, res_size, bias=1, seed=None):
         """
         Initialize the Echo State Network.
 
@@ -36,23 +36,32 @@ class ESN:
         self.w_out    = None
         self.x        = None
 
-    def fit(self, u_train, y_train, method = "ridge", train_skip = 0):
+    def fit(self, u_train, y_train, method = "ridge", reg=1e-6, train_skip = 0):
         """
         This is the training function for the ESN. Allowing for control
         over fit start point and fitting type.
 
-        Methods
-        "ridge", "ols"
+        Parameters
+            u_train (ndarray): training input sequence (T x 1)
+            y_train (ndarray): training target sequence (T x output_dim)
+            method (str): "ridge" or "ols"
+            reg (float): ridge parameter
+            train_skip (int): washout period
         """
 
-        #Determine input/output size
-        self.in_size  = u_train.shape[0] if u_train.ndim == 2 else 1
-        self.out_size = y_train.shape[0] if y_train.ndim == 2 else 1
-
+        #Determine input size
         if u_train.ndim == 2:
+            self.in_size  = u_train.shape[0]
             T = u_train.shape[1]
-        else: 
+        else:
+            1
             len(u_train)
+
+        #Determine output size
+        if y_train.ndim == 2:
+            self.out_size = y_train.shape[0]
+        else:
+            1
 
         # Initialize input weight matrix
         self.w_in = self.rng.random((self.res_size, self.in_size + self.bias)) - 0.5
@@ -78,7 +87,7 @@ class ESN:
 
         # Train output weights
         if method == "ridge":
-            self.w_out = np.dot(y_train, np.dot(X.T, np.linalg.inv(np.dot(X, X.T) + 1e-6 * np.eye(self.res_size + 1))))
+            self.w_out = np.dot(y_train, np.dot(X.T, np.linalg.inv(np.dot(X, X.T) + reg * np.eye(self.res_size + 1))))
         elif method == "ols":
             self.w_out = np.dot(y_train, np.linalg.pinv(X))
         else:

@@ -37,36 +37,6 @@ class EO_RC:
         self.x        = None
         self.y        = None
 
-
-    def _nonlinearity(self, z):
-        """
-        Mach-Zehnder-like sinusoidal nonlinearity.
-        
-        Parameters
-            z (float): Current phase from feedback of previous nodes and input signal
-        """
-        return np.sin(z + self.phi)
-
-
-    def _step(self, u):
-        """
-        Update the reservoir using virtual node time-multiplexing
-
-            Parameters
-                u (float): Input signal
-        """
-        # Initialize current timestep
-        new_x = np.zeros(self.res_size)
-
-        # Fill nodes based off previous timestep
-        new_x[0] = self._nonlinearity(self.alpha * self.x[-1] + self.beta * u)
-        for i in range(1, self.res_size):
-            new_x[i] = self._nonlinearity(self.alpha * new_x[i-1] + self.beta * u)
-
-        self.x = new_x
-        return new_x
-
-
     def fit(self, u_train, y_train, method="ridge", reg=1e-6, train_skip=0):
         """
         Train the EO-Reservoir readout layer.
@@ -79,15 +49,23 @@ class EO_RC:
             train_skip (int): washout period
         """
 
-        # Detect input/output size
-        self.in_size  = u_train.shape[1] if u_train.ndim == 2 else 1
-        self.out_size = y_train.shape[1] if y_train.ndim == 2 else 1
+       #Determine input size
+        if u_train.ndim == 2:
+            self.in_size = u_train.shape[0]
+            T = u_train.shape[1]
+        else:
+            self.in_size = 1
+            T = len(u_train)
 
-        T = len(u_train)
+        #Determine output size
+        if y_train.ndim == 2:
+            self.out_size = y_train.shape[0]
+        else:
+            self.out_size = 1
 
         # Store states
         X = np.zeros((self.res_size, T))
-        Y = y_train.T  # shape: (out_size, T)
+        Y = y_train.T
 
         # Reset reservoir
         self.x = np.zeros(self.res_size)
@@ -95,8 +73,17 @@ class EO_RC:
         # Collect states
         for t in range(T):
             u = float(u_train[t])
-            x_state = self._step(u)
-            X[:, t] = x_state
+
+            # Initialize current timestep
+            x = np.zeros(self.res_size)
+
+            # Fill current timestep nodes based off previous timestep nodes and current input
+            x[0] = np.sin((self.alpha * self.x[-1] + self.beta * u) + self.phi)
+            for i in range(1, self.res_size):
+                x[i] =  np.sin((self.alpha * x[i-1] + self.beta * u) + self.phi)
+
+            self.x = x
+            X[:, t] = x
 
         # Add bias term
         X_aug = np.vstack((np.ones(T), X))
@@ -143,17 +130,17 @@ class EO_RC:
         for i in range(test_length):
 
             # Reservoir update via EO time-multiplexed dynamics
-            new_x = np.zeros(self.res_size)
+            x = np.zeros(self.res_size)
 
             # First virtual node uses last node from previous timestep
-            new_x[0] = self._nonlinearity(self.alpha * self.x[-1] + self.beta * u)
+            x[0] =  np.sin((self.alpha * self.x[-1] + self.beta * u) + self.phi)
 
             # Remaining nodes depend on previous virtual node
             for j in range(1, self.res_size):
-                new_x[j] = self._nonlinearity(self.alpha * new_x[j - 1] + self.beta * u)
+                x[j] =  np.sin((self.alpha * x[j - 1] + self.beta * u) + self.phi)
 
             # Commit reservoir update
-            self.x = new_x
+            self.x = x
 
             # Compute output-
             y = np.dot(self.w_out, np.concatenate(([1], self.x)))
