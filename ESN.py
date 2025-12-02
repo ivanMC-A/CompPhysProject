@@ -1,5 +1,3 @@
-import numpy as np
-
 class ESN:
     """
     A class for creating an basic echo state network (ESN).
@@ -27,39 +25,34 @@ class ESN:
         # Normalize matrix network
         self.w_res *= 1 / np.max(np.abs(np.linalg.eigvals(self.w_res)))
         
-        # Placeholders for input/output sizes and weights
+        # Placeholders for network properties
         self.in_size  = None
         self.out_size = None
         self.w_in     = None
         self.w_out    = None
         self.x        = None
-
+    
     def fit(self, u_train, y_train, method = "ridge", reg=1e-6, train_skip = 0):
         """
         This is the training function for the ESN. Allowing for control
         over fit start point and fitting type.
 
         Parameters
-            u_train (ndarray): training input sequence (T x 1)
-            y_train (ndarray): training target sequence (T x output_dim)
+            u_train (ndarray): training input
+            y_train (ndarray): training output
             method (str): "ridge" or "ols"
             reg (float): ridge parameter
-            train_skip (int): washout period
+            train_skip (int): Steps to skip for training
         """
+        
+        if u_train.shape[0] > 1 or y_train.shape[0] > 1:
+            raise ValueError("Data must be reshapped!")
 
         #Determine input size
-        if u_train.ndim == 2:
-            self.in_size = u_train.shape[1]
-            T = u_train.shape[0]
-        else:
-            self.in_size = 1
-            T = len(u_train)
+        self.in_size = u_train.shape[0]
 
         #Determine output size
-        if y_train.ndim == 2:
-            self.out_size = y_train.shape[1]
-        else:
-            self.out_size = 1
+        self.out_size = y_train.shape[0]
 
         # Initialize input weight matrix
         self.w_in = self.rng.random((self.res_size, self.in_size + 1)) - 0.5
@@ -67,40 +60,31 @@ class ESN:
         # Initialize reservoir state
         x = np.zeros((self.res_size, 1))
 
-        # Collect states
-        X = np.zeros((self.res_size + 1, T))
-        for t in range(T):
-            
-            if self.in_size > 1:
-                u = u_train[t, :].reshape(-1, 1)
-            else:
-                u = np.array([[u_train[t]]])
+        # Reset saved states
+        self.x = np.zeros((self.res_size + 1, u_train.shape[1] - train_skip)) + 1
 
+        # Set states
+        for i in range(u_train.shape[1]):
+            u = u_train[:, i]
             x = np.tanh(np.dot(self.w_in, np.vstack((1, u))) + np.dot(self.w_res, x))
-            X[1:, t] = x[:, 0]
-        X[0, :] = 1
 
-        # Apply washout
-        x_used = X[:, train_skip:]
-        if y_train.ndim == 2:
-            y_used = y_train[train_skip:, :].T
-        else:
-            y_used = y_train[train_skip:].reshape(1, -1)
-
-        # Save state matrix
-        self.x = X
+            if i>= train_skip:
+                self.x[:, i - train_skip] = np.vstack((1, x))[:, 0]
 
         # Train output weights
         if method == "ridge":
-            self.w_out = np.dot(y_used, np.dot(x_used.T, np.linalg.inv(np.dot(x_used, x_used.T) + reg * np.eye(self.res_size + 1))))
+            self.w_out = np.linalg.solve(
+                np.dot(self.x, self.x.T) + reg * np.eye(1 + self.res_size),
+                np.dot(self.x, y_train[:, train_skip:].T)
+            ).T
         elif method == "ols":
-            self.w_out = np.dot(y_used, np.linalg.pinv(x_used))
+            self.w_out = np.linalg.solve(
+                np.dot(self.x, self.x.T),
+                np.dot(self.x, y_train[:, train_skip:].T)
+            ).T
         else:
             raise ValueError("Unsupported training method")
-
-        return self.w_out
-
-
+        
     def predict(self, u_init, test_length):
         """
         Generate closed-loop predictions using the trained Echo State Network (ESN).
@@ -117,10 +101,10 @@ class ESN:
         prediction = np.zeros((self.out_size, test_length))
 
         # Trained resevoir state
-        x = self.x[1:, -1:].reshape(-1, 1)
+        x = self.x[1:, self.x.shape[1] - 1:]
 
         #Initialize input 
-        u = u_init.reshape(-1, 1)
+        u = u_init
 
         # Closed-loop prediction
         for i in range(test_length):
@@ -134,7 +118,7 @@ class ESN:
             # Store output
             prediction[:, i] = y[:, 0]
 
-            # Feedbacks
+            # Feedback
             u = y
 
         return prediction
