@@ -8,7 +8,7 @@ class EO_RC:
     #Initialize a new EO-RC
     def __init__(self, res_size, alpha=0.8, beta=0.25, phi=0.2, seed=None):
         """
-        Initialize the Echo State Network.
+        Initialize the EO-Resevoir.
 
         Parameters
             res_size (int): Number of resevoir nodes
@@ -34,7 +34,6 @@ class EO_RC:
         self.in_size  = None
         self.out_size = None
         self.w_out    = None
-        self.x        = None
         self.y        = None
 
     def fit(self, u_train, y_train, method="ridge", reg=1e-6, train_skip=0):
@@ -49,17 +48,17 @@ class EO_RC:
             train_skip (int): washout period
         """
 
-       #Determine input size
+        #Determine input size
         if u_train.ndim == 2:
-            self.in_size = u_train.shape[0]
-            T = u_train.shape[1]
+            self.in_size = u_train.shape[1]
+            T = u_train.shape[0]
         else:
             self.in_size = 1
             T = len(u_train)
 
         #Determine output size
         if y_train.ndim == 2:
-            self.out_size = y_train.shape[0]
+            self.out_size = y_train.shape[1]
         else:
             self.out_size = 1
 
@@ -72,7 +71,11 @@ class EO_RC:
 
         # Collect states
         for t in range(T):
-            u = float(u_train[t])
+
+            if self.in_size == 1:
+                u = float(u_train[t])
+            else:
+                u = float(u_train[t, 0])
 
             # Initialize current timestep
             x = np.zeros(self.res_size)
@@ -88,14 +91,18 @@ class EO_RC:
         # Add bias term
         X_aug = np.vstack((np.ones(T), X))
 
-        # Save state matrix for prediction
-        self.x = X_aug
+        # Save last reservoir state for prediction
+        self.x = X[:, -1].copy()
+
+        # Apply washout
+        X_used = X_aug[:, train_skip:]
+        Y_used = Y[:, train_skip:]
 
         # Train output weights
         if method == "ridge":
-            self.w_out = np.dot(np.dot(Y, X_aug.T), np.linalg.inv(np.dot(X_aug, X_aug.T) + reg * np.eye(self.res_size + 1)))
+            self.w_out = np.dot(np.dot(Y_used, X_used.T), np.linalg.inv(np.dot(X_used, X_used.T) + reg * np.eye(self.res_size + 1)))
         elif method == "ols":
-            self.w_out = np.dot(Y, np.linalg.pinv(X_aug))
+            self.w_out = np.dot(Y_used, np.linalg.pinv(X_used))
         else:
             raise ValueError("Unsupported training method")
 
@@ -118,13 +125,13 @@ class EO_RC:
         prediction = np.zeros((self.out_size, test_length))
 
         # Trained resevoir state
-        self.x = self.x[1:, -1:].reshape(-1)
+        self.x = self.x.reshape(-1)
 
         #Initialize input 
         if np.isscalar(u_init):
             u = float(u_init)
         else:
-            u= float(u_init[0])
+            u = float(u_init[0])
 
         # Closed-loop autonomous prediction
         for i in range(test_length):
@@ -149,6 +156,6 @@ class EO_RC:
             prediction[:, i] = y
 
             # Feedback: output becomes next input
-            u = y
+            u = float(y[0])
 
         return prediction

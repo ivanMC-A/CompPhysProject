@@ -6,28 +6,26 @@ class ESN:
     """
 
     #Initialize a new ESN
-    def __init__(self, res_size, bias=1, seed=None):
+    def __init__(self, res_size, seed=None):
         """
         Initialize the Echo State Network.
 
         Parameters
             res_size (int): Number of resevoir nodes
             seed (int): Random seed
-            bias (float) : resevoir bias
         """
 
         # RNG
         self.rng = np.random.default_rng(seed)
 
-        # Store size
+        # Store size system parameters
         self.res_size = res_size
-        self.bias = bias
 
         # Create randomized matrix network
         self.w_res = self.rng.random((self.res_size, self.res_size)) - 0.5
 
         # Normalize matrix network
-        self.w_res *= 1 / max(abs(np.linalg.eigvals(self.w_res)))
+        self.w_res *= 1 / np.max(np.abs(np.linalg.eigvals(self.w_res)))
         
         # Placeholders for input/output sizes and weights
         self.in_size  = None
@@ -51,20 +49,20 @@ class ESN:
 
         #Determine input size
         if u_train.ndim == 2:
-            self.in_size  = u_train.shape[0]
-            T = u_train.shape[1]
+            self.in_size = u_train.shape[1]
+            T = u_train.shape[0]
         else:
-            1
-            len(u_train)
+            self.in_size = 1
+            T = len(u_train)
 
         #Determine output size
         if y_train.ndim == 2:
-            self.out_size = y_train.shape[0]
+            self.out_size = y_train.shape[1]
         else:
-            1
+            self.out_size = 1
 
         # Initialize input weight matrix
-        self.w_in = self.rng.random((self.res_size, self.in_size + self.bias)) - 0.5
+        self.w_in = self.rng.random((self.res_size, self.in_size + 1)) - 0.5
 
         # Initialize reservoir state
         x = np.zeros((self.res_size, 1))
@@ -74,22 +72,29 @@ class ESN:
         for t in range(T):
             
             if self.in_size > 1:
-                u = u_train[:, t].reshape(-1, 1)
+                u = u_train[t, :].reshape(-1, 1)
             else:
-                np.array([[u_train[t]]])
+                u = np.array([[u_train[t]]])
 
             x = np.tanh(np.dot(self.w_in, np.vstack((1, u))) + np.dot(self.w_res, x))
             X[1:, t] = x[:, 0]
-        X[0, :] = self.bias
+        X[0, :] = 1
+
+        # Apply washout
+        x_used = X[:, train_skip:]
+        if y_train.ndim == 2:
+            y_used = y_train[train_skip:, :].T
+        else:
+            y_used = y_train[train_skip:].reshape(1, -1)
 
         # Save state matrix
         self.x = X
 
         # Train output weights
         if method == "ridge":
-            self.w_out = np.dot(y_train, np.dot(X.T, np.linalg.inv(np.dot(X, X.T) + reg * np.eye(self.res_size + 1))))
+            self.w_out = np.dot(y_used, np.dot(x_used.T, np.linalg.inv(np.dot(x_used, x_used.T) + reg * np.eye(self.res_size + 1))))
         elif method == "ols":
-            self.w_out = np.dot(y_train, np.linalg.pinv(X))
+            self.w_out = np.dot(y_used, np.linalg.pinv(x_used))
         else:
             raise ValueError("Unsupported training method")
 
@@ -112,10 +117,10 @@ class ESN:
         prediction = np.zeros((self.out_size, test_length))
 
         # Trained resevoir state
-        x = self.X[1:, -1:].reshape(-1, 1)
+        x = self.x[1:, -1:].reshape(-1, 1)
 
         #Initialize input 
-        u = u_init
+        u = u_init.reshape(-1, 1)
 
         # Closed-loop prediction
         for i in range(test_length):
