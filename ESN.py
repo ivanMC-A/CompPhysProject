@@ -1,3 +1,5 @@
+import numpy as np
+
 class ESN:
     """
     A class for creating an basic echo state network (ESN).
