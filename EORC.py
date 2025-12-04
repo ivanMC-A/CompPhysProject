@@ -56,7 +56,7 @@ class EORC:
         self.out_size = y_train.shape[0]
 
         # Initialize input weight matrix
-        self.w_in = np.ones((self.res_size, self.in_size + 1)) * self.alpha
+        self.w_in = self.rng.random((self.res_size, self.in_size + 1)) * self.alpha
 
         # Initialize reservoir state
         x = np.zeros((self.res_size, 1))
