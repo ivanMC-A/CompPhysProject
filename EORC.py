@@ -1,6 +1,6 @@
 import numpy as np
 
-class EO_RC:
+class EORC:
     """
     A class for creating an EO-Reservoir Computer (EO-RC).
     """
@@ -27,14 +27,12 @@ class EO_RC:
         self.beta  = beta
         self.phi   = phi
 
-        # Initial reservoir state
-        self.x = np.zeros(res_size)
-
-        # Placeholders for training-derived values
+        
+        # Placeholders for network properties
         self.in_size  = None
         self.out_size = None
         self.w_out    = None
-        self.y        = None
+        self.x        = None
 
     def fit(self, u_train, y_train, method="ridge", reg=1e-6, train_skip=0):
         """
@@ -48,65 +46,45 @@ class EO_RC:
             train_skip (int): washout period
         """
 
+        if u_train.shape[0] > 1 or y_train.shape[0] > 1:
+            raise ValueError("Data must be reshapped!")
+
         #Determine input size
-        if u_train.ndim == 2:
-            self.in_size = u_train.shape[1]
-            T = u_train.shape[0]
-        else:
-            self.in_size = 1
-            T = len(u_train)
+        self.in_size = u_train.shape[0]
 
         #Determine output size
-        if y_train.ndim == 2:
-            self.out_size = y_train.shape[1]
-        else:
-            self.out_size = 1
+        self.out_size = y_train.shape[0]
 
-        # Store states
-        X = np.zeros((self.res_size, T))
-        Y = y_train.T
+        # Initialize input weight matrix
+        self.w_in = np.ones((self.res_size, self.in_size + 1)) * self.alpha
 
-        # Reset reservoir
-        self.x = np.zeros(self.res_size)
+        # Initialize reservoir state
+        x = np.zeros((self.res_size, 1))
 
-        # Collect states
-        for t in range(T):
+        # Reset saved states
+        self.x = np.zeros((self.res_size + 1, u_train.shape[1] - train_skip)) + 1
 
-            if self.in_size == 1:
-                u = float(u_train[t])
-            else:
-                u = float(u_train[t, 0])
+        # Set states
+        for i in range(u_train.shape[1]):
+            u = u_train[:, i]
+            x = np.sin(np.dot(self.w_in, np.vstack((1, u))) + self.beta*x + self.phi)**2
 
-            # Initialize current timestep
-            x = np.zeros(self.res_size)
-
-            # Fill current timestep nodes based off previous timestep nodes and current input
-            x[0] = np.sin((self.alpha * self.x[-1] + self.beta * u) + self.phi)
-            for i in range(1, self.res_size):
-                x[i] =  np.sin((self.alpha * x[i-1] + self.beta * u) + self.phi)
-
-            self.x = x
-            X[:, t] = x
-
-        # Add bias term
-        X_aug = np.vstack((np.ones(T), X))
-
-        # Save last reservoir state for prediction
-        self.x = X[:, -1].copy()
-
-        # Apply washout
-        X_used = X_aug[:, train_skip:]
-        Y_used = Y[:, train_skip:]
+            if i>= train_skip:
+                self.x[:, i - train_skip] = np.vstack((1, x))[:, 0]
 
         # Train output weights
         if method == "ridge":
-            self.w_out = np.dot(np.dot(Y_used, X_used.T), np.linalg.inv(np.dot(X_used, X_used.T) + reg * np.eye(self.res_size + 1)))
+            self.w_out = np.linalg.solve(
+                np.dot(self.x, self.x.T) + reg * np.eye(1 + self.res_size),
+                np.dot(self.x, y_train[:, train_skip:].T)
+            ).T
         elif method == "ols":
-            self.w_out = np.dot(Y_used, np.linalg.pinv(X_used))
+            self.w_out = np.linalg.solve(
+                np.dot(self.x, self.x.T),
+                np.dot(self.x, y_train[:, train_skip:].T)
+            ).T
         else:
             raise ValueError("Unsupported training method")
-
-        return self.w_out
 
 
     def predict(self, u_init, test_length):
@@ -125,37 +103,24 @@ class EO_RC:
         prediction = np.zeros((self.out_size, test_length))
 
         # Trained resevoir state
-        self.x = self.x.reshape(-1)
+        x = self.x[1:, self.x.shape[1] - 1:]
 
         #Initialize input 
-        if np.isscalar(u_init):
-            u = float(u_init)
-        else:
-            u = float(u_init[0])
+        u = u_init
 
-        # Closed-loop autonomous prediction
+        # Closed-loop prediction
         for i in range(test_length):
+            
+            # Update resevoir state
+            x = np.sin(np.dot(self.w_in, np.vstack((1, u))) + self.beta*x + self.phi)**2
+            
+            # Compute output
+            y = np.dot(self.w_out, np.vstack((1, x)))
+            
+            # Store output
+            prediction[:, i] = y[:, 0]
 
-            # Reservoir update via EO time-multiplexed dynamics
-            x = np.zeros(self.res_size)
-
-            # First virtual node uses last node from previous timestep
-            x[0] =  np.sin((self.alpha * self.x[-1] + self.beta * u) + self.phi)
-
-            # Remaining nodes depend on previous virtual node
-            for j in range(1, self.res_size):
-                x[j] =  np.sin((self.alpha * x[j - 1] + self.beta * u) + self.phi)
-
-            # Commit reservoir update
-            self.x = x
-
-            # Compute output-
-            y = np.dot(self.w_out, np.concatenate(([1], self.x)))
-
-            # Store prediction
-            prediction[:, i] = y
-
-            # Feedback: output becomes next input
-            u = float(y[0])
+            # Feedback
+            u = y
 
         return prediction
