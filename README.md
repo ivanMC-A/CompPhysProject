@@ -76,6 +76,7 @@ plt.legend()
 plt.ylabel(r"$P(t)$")
 plt.xlabel(r"$t$")
 ```
+![example image](images/example.png)
 
 
 ## Project Description
