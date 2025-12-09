@@ -3,10 +3,10 @@
 ## Installation
 ### Requirements
 - Python **3.9 or later**
-- 'git'
-- 'pip'
-- 'numpy'
-- 'jupyterlab'
+- `git`
+- `pip`
+- `numpy`
+- `jupyterlab`
 
 ### Clone repository
 Open your terminal and go to the folder were you want to install this code. Once there, you would run the following code:
