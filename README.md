@@ -1,5 +1,29 @@
 # Resevoir Computing and modelling Echo State Networks
 
+## Installation
+### Requirements
+- Python **3.9 or later**
+- 'git'
+- 'pip'
+- 'numpy'
+- 'jupyterlab'
+
+### Clone repository
+Open your terminal and go to the folder were you want to install this code. Once there, you would run the following code:
+'''
+git clone https://github.com/ivanMC-A/CompPhysProject.git
+cd CompPhysProject
+'''
+The latter line is to move to the code's folder.
+
+### Verify Installation
+
+You can verify that everything is set up correctly by running:
+
+'''
+jupyter lab rnnExamples.ipynb
+'''
+
 ## Project Description
 As AI and machine learning become more prevelant in society, finding device architecture to match the software needs becomes increasingly important. Resevoir computing is a way to use optical integration into existing silicon infrastructure to realize these needs. A resevoir computer as in Brunner, _et al_., creates a system similar to an echo state network in the time domain, where the weighting matrix is confined by the components and material characteristics. Here we will create a toy model by designing an echo state network that fits and predicts a function of Mackey Glass type. 
 
