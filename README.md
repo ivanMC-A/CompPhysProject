@@ -80,7 +80,7 @@ plt.xlabel(r"$t$")
 ![example image](images/example.png)
 
 ### Example Script
-A complete, minimal working example can be found in file `rnnExamples.ipynb`. This is the same file mentioned in the installation section. Once in the projects folder in your terminal, you can run the minimal example by running the following line:
+A complete, minimal working example can be found in file `rnnExamples.ipynb`. This is the same file mentioned in the installation section. Once in the project's folder in your terminal, you can run the minimal example by running the following line:
 
 ```bash
 jupyter lab rnnExamples.ipynb
