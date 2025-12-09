@@ -28,7 +28,8 @@ jupyter lab rnnExamples.ipynb
 ### Basic Example
 The following example shows how to use import our code and a small demonstration.
 ```
-import RNN as RNN
+import numpy as np
+import RNN as rnn
 import matplotlib.pyplot as plt
 ```
 You will need data you want to predict.
@@ -55,7 +56,7 @@ y_train = dataMg17[:, 1:train_legnth + 1]
 u_test = dataMg17[:, test_legnth ]
 
 # Initialize resevoir
-mgESN = RNN.ESN(res_size, seed = 125)
+mgESN = rnn.ESN(res_size, seed = 125)
 
 # Train resevoir
 mgESN.fit(u_train, y_train, method = "ridge", train_skip=train_skip)
@@ -78,6 +79,19 @@ plt.xlabel(r"$t$")
 ```
 ![example image](images/example.png)
 
+### Example Script
+A complete, minimal working example can be found in file `rnnExamples/ipynb`. This is the same file mentioned in the installation section. Once in the projects folder in your terminal, you can run the minimal example by running the following line:
+
+```
+jupyter lab rnnExamples.ipynb
+```
+
+This notebook does the following:
+
+* Imports core functionalities
+* Set ups the problem
+* Executes main computations
+* Plots results
 
 ## Project Description
 As AI and machine learning become more prevelant in society, finding device architecture to match the software needs becomes increasingly important. Resevoir computing is a way to use optical integration into existing silicon infrastructure to realize these needs. A resevoir computer as in Brunner, _et al_., creates a system similar to an echo state network in the time domain, where the weighting matrix is confined by the components and material characteristics. Here we will create a toy model by designing an echo state network that fits and predicts a function of Mackey Glass type. 
