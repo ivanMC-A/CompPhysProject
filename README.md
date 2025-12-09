@@ -10,7 +10,7 @@
 
 ### Clone repository
 Open your terminal and go to the folder were you want to install this code. Once there, you would run the following code:
-```
+```bash
 git clone https://github.com/ivanMC-A/CompPhysProject.git
 cd CompPhysProject
 ```
@@ -20,7 +20,7 @@ The latter line is to move to the code's folder.
 
 You can verify that everything is set up correctly by running:
 
-```
+```bash
 jupyter lab rnnExamples.ipynb
 ```
 ## Example Usage
@@ -82,7 +82,7 @@ plt.xlabel(r"$t$")
 ### Example Script
 A complete, minimal working example can be found in file `rnnExamples.ipynb`. This is the same file mentioned in the installation section. Once in the projects folder in your terminal, you can run the minimal example by running the following line:
 
-```
+```bash
 jupyter lab rnnExamples.ipynb
 ```
 
