@@ -69,7 +69,7 @@ y_ridge_predict = mgESN.predict(u_init=u_test, test_length=test_legnth)
 ```
 
 Here is a plot of our predictions
-```
+```python
 plt.figure(figsize=(20,10))
 plt.plot(range(test_legnth),y_test[0],'o-',label='test data')
 plt.plot(range(test_legnth),y_ridge_predict[0],'o-',label='ridge prediction')
@@ -80,7 +80,7 @@ plt.xlabel(r"$t$")
 ![example image](images/example.png)
 
 ### Example Script
-A complete, minimal working example can be found in file `rnnExamples/ipynb`. This is the same file mentioned in the installation section. Once in the projects folder in your terminal, you can run the minimal example by running the following line:
+A complete, minimal working example can be found in file `rnnExamples.ipynb`. This is the same file mentioned in the installation section. Once in the projects folder in your terminal, you can run the minimal example by running the following line:
 
 ```
 jupyter lab rnnExamples.ipynb
