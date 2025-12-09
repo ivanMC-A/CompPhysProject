@@ -23,6 +23,60 @@ You can verify that everything is set up correctly by running:
 ```
 jupyter lab rnnExamples.ipynb
 ```
+## Example Usage
+  This section is used to show the intended workflow and usage of our code.
+### Basic Example
+The following example shows how to use import our code and a small demonstration.
+```
+import RNN as RNN
+import matplotlib.pyplot as plt
+```
+You will need data you want to predict.
+```
+dataMg17 = np.loadtxt('data/mackeyGlass/MackeyGlass_t17.txt')
+```
+For this example, we will use the Mackey Glass data. Since this is a RNN to predict time series, we want that our row corresponds to time. We proceed to reshape our data.
+```
+dataMg17 = np.reshape(dataMg17, (1, dataMg17.shape[0]))
+```
+
+Now, we proceed to train our data.
+
+```
+# Set the training and testing parameters
+res_size = 400
+train_legnth = 200
+train_skip = 0
+test_legnth = 200
+
+# Select data based off training and testing parameters
+u_train = dataMg17[:, 0:train_legnth]
+y_train = dataMg17[:, 1:train_legnth + 1]
+u_test = dataMg17[:, test_legnth ]
+
+# Initialize resevoir
+mgESN = RNN.ESN(res_size, seed = 125)
+
+# Train resevoir
+mgESN.fit(u_train, y_train, method = "ridge", train_skip=train_skip)
+```
+The last line generates an out weight matrix that will be useful for predictions. Notice that we have optimized our out weight matrix with Ridge regression. Now, we proceed to predict some data.
+
+```
+y_test = dataMg17[:, test_legnth + 1 : test_legnth + test_legnth + 1]
+y_ridge_predict = mgESN.predict(u_init=u_test, test_length=test_legnth)
+```
+
+Here is a plot of our predictions
+```
+plt.figure(figsize=(20,10))
+plt.plot(range(test_legnth),y_test[0],'o-',label='test data')
+plt.plot(range(test_legnth),y_ridge_predict[0],'o-',label='ridge prediction')
+plt.legend()
+plt.ylabel(r"$P(t)$")
+plt.xlabel(r"$t$")
+```
+
 
 ## Project Description
 As AI and machine learning become more prevelant in society, finding device architecture to match the software needs becomes increasingly important. Resevoir computing is a way to use optical integration into existing silicon infrastructure to realize these needs. A resevoir computer as in Brunner, _et al_., creates a system similar to an echo state network in the time domain, where the weighting matrix is confined by the components and material characteristics. Here we will create a toy model by designing an echo state network that fits and predicts a function of Mackey Glass type. 
