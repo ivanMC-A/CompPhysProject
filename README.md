@@ -27,23 +27,23 @@ jupyter lab rnnExamples.ipynb
   This section is used to show the intended workflow and usage of our code.
 ### Basic Example
 The following example shows how to use import our code and a small demonstration.
-```
+```python
 import numpy as np
 import RNN as rnn
 import matplotlib.pyplot as plt
 ```
 You will need data you want to predict.
-```
+```python
 dataMg17 = np.loadtxt('data/mackeyGlass/MackeyGlass_t17.txt')
 ```
 For this example, we will use the Mackey Glass data. Since this is a RNN to predict time series, we want that our row corresponds to time. We proceed to reshape our data.
-```
+```python
 dataMg17 = np.reshape(dataMg17, (1, dataMg17.shape[0]))
 ```
 
 Now, we proceed to train our data.
 
-```
+```python
 # Set the training and testing parameters
 res_size = 400
 train_legnth = 200
@@ -63,7 +63,7 @@ mgESN.fit(u_train, y_train, method = "ridge", train_skip=train_skip)
 ```
 The last line generates an out weight matrix that will be useful for predictions. Notice that we have optimized our out weight matrix with Ridge regression. Now, we proceed to predict some data.
 
-```
+```python
 y_test = dataMg17[:, test_legnth + 1 : test_legnth + test_legnth + 1]
 y_ridge_predict = mgESN.predict(u_init=u_test, test_length=test_legnth)
 ```
