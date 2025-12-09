@@ -124,3 +124,9 @@ class EORC:
             u = y
 
         return prediction
+    
+    def score(self, u_init, y, test_length):
+        """
+        Returns the mean squared error of the model.
+        """
+        return np.mean((self.predict(u_init,test_length) - y)**2,axis =0)
