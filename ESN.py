@@ -124,7 +124,7 @@ class ESN:
             u = y
 
         return prediction
-    def score(self, u_init, test_length, y):
+    def score(self, u_init, y, test_length):
         """
         Returns the mean squared error of the model.
         """
