@@ -126,6 +126,8 @@ Where the respective MSE was:
 
 ![alt text](images/image-1.png)
 
+Looking at the MSE, we notice that it is in average larger than that of the ESN by an order of magnitude. The next step of this project would be to find a more suitable approximation to the tanh function that better predicts the Mackey Glass data.
+
 While we encountered challenges in the implementation of the electo-optical delay reservoir computer, we believe that our approximation using the sin^2 function is a big step in the right direction.
 
 ## Background
