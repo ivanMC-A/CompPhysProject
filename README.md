@@ -94,7 +94,9 @@ This notebook does the following:
 * Plots results
 
 ## Project Description
-As AI and machine learning become more prevelant in society, finding device architecture to match the software needs becomes increasingly important. Resevoir computing is a way to use optical integration into existing silicon infrastructure to realize these needs. A resevoir computer as in Brunner, _et al_., creates a system similar to an echo state network in the time domain, where the weighting matrix is confined by the components and material characteristics. Here we will create a toy model by designing an echo state network that fits and predicts a function of Mackey Glass type. 
+As AI and machine learning become more prevelant in society, finding device architecture to match the software needs becomes increasingly important. Resevoir computing is a way to use optical integration into existing silicon infrastructure to realize these needs. A resevoir computer as in Brunner, _et al_., creates a system similar to an echo state network in the time domain, where the weighting matrix is confined by the components and material characteristics. Here we will create a toy model by designing an echo state network that fits and predicts a function of Mackey Glass type.
+
+One unique characteristic of an electro-optic delay reservoir computer is the introduction of analog non-linear signals that are fed back into the system. This project attempts to simulate a physical non-linear network using the architecture of echo-state networks. Our goal is to be able to simulate the analog nature of the electro-optic delayed reservoir within the framework of digital computation.
 
 In the context of materials manufacturing, the significance of this project lies in the possibility of simulating electro-optical components with the unique characteristics of a given material. By providing a reliable predictor of material viability, it encourages continued research and investment in manufacturing development.
 
@@ -108,7 +110,7 @@ As given in the example, we will first begin with an attempt to create a main py
 4. If time allows, attempt to adjust parameters based on true material capabilities and archetechtures to model a true system. 
 
 ## Benchmarks
-The Mackey Glass toy model shows a low oscillating error when predicted through the ridge method as observed below:
+The Mackey Glass toy model trained using an echo-state network shows a low oscillating error when predicted through the ridge method as observed below:
 
 ![alt text](images/image3.png)
 
